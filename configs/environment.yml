@@ -1,0 +1,40 @@
+name: webrag
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - langchain
+  - openai
+  - chromadb
+  - python-docx
+  - pdf2image
+  - pytesseract
+  - pdfminer.six
+  - markdown
+  - tiktoken
+  - faiss-cpu
+  - transformers
+  - sentence-transformers
+  - tenacity
+  - numpy
+  - pandas
+  - pyqt
+  - markdown
+  - pygments 
+  - python-dotenv
+  - python-markdown-math
+  - pyqtwebengine
+  - pip
+  - langchain-openai
+  - langchain-community
+  - langchain-chroma
+  - tqdm
+  - aiohttp
+  - aiofiles
+  - urllib3
+  - requests
+  - beautifulsoup4
+  - html2text
+  - pip:
+    - unstructured

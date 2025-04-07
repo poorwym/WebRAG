@@ -1,0 +1,97 @@
+{
+    "gpt_4": {
+        "model": "gpt-4",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "gpt_3_5_turbo": {
+        "model": "gpt-3.5-turbo",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "gpt_3_5_turbo_0125": {
+        "model": "gpt-3.5-turbo-0125",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "gpt_3_5_turbo_16k": {
+        "model": "gpt-3.5-turbo-16k",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "gpt_4_5_preview": {
+        "model": "gpt-4.5-preview",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "o1_mini": {
+        "model": "o1-mini",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "o1_preview": {
+        "model": "o1-preview",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "o3_mini": {
+        "model": "o3-mini",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "o1": {
+        "model": "o1",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "gpt_4o": {
+        "model": "gpt-4o",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "gpt_4o_mini": {
+        "model": "gpt-4o-mini",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "gpt_4_turbo_preview": {
+        "model": "gpt-4-turbo-preview",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "gpt_4_vision_preview": {
+        "model": "gpt-4-vision-preview",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "claude_3_7_sonnet": {
+        "model": "claude-3-7-sonnet-20250219",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "claude_3_5_sonnet": {
+        "model": "claude-3-5-sonnet-20241022",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "gemini_1_5_pro": {
+        "model": "gemini-1.5-pro-latest",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "gemini_1_5_flash": {
+        "model": "gemini-1.5-flash-latest",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "deepseek_reasoner": {
+        "model": "deepseek-reasoner",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    },
+    "grok_3": {
+        "model": "grok-3",
+        "openai_api_key": "${OPENAI_API_KEY}",
+        "base_url": "https://api.chatanywhere.tech/v1"
+    }
+}
