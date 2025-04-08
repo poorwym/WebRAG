@@ -71,7 +71,7 @@ url提取采取嵌套提取，深度限制为3.
 
 示例：
 ```python
-python src/build_db.py --db-name cesium --file-path ./websites.txt
+python src/build_db.py --db-name cesium --file-path ./websites.txt --required-prefix https://cesium.com/learn/
 ```
 
 1. CLI交互
