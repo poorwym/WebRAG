@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import List, Dict, Optional, Union
 import uuid
 from utils.logger import Logger
+from utils.config_loader import ConfigLoader
 
 class ConversationsManager:
     def __init__(self, conversations_dir=None):
@@ -11,7 +12,8 @@ class ConversationsManager:
         self.logger = Logger("conversations_manager")
         
         # 自动定位项目根目录
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # src/conversation/ --> src/ --> 根目录
+        config = ConfigLoader()
+        project_root = config.get("project_root", "")
         default_dir = os.path.join(project_root, "data", "conversations")
 
         # 使用传入路径或默认路径
