@@ -334,9 +334,6 @@ class WebRagGUI(QMainWindow):
         """)
         content_layout.addWidget(self.db_selector)
         
-        # 加载可用数据库
-        self.load_databases()
-        
         # 创建输入区域
         input_label = QLabel('请输入你的问题:')
         input_label.setFixedHeight(40)  # 设置固定高度为40像素
@@ -430,6 +427,9 @@ class WebRagGUI(QMainWindow):
         self.status_label = QLabel('就绪')
         self.status_label.setStyleSheet("font-style: italic; color: #ff9eb6;")
         content_layout.addWidget(self.status_label)
+        
+        # 加载可用数据库 - 移动到这里，确保所有UI元素都已创建
+        self.load_databases()
         
         # 创建分割器，使左右两个面板可以调整大小
         splitter = QSplitter(Qt.Horizontal)

@@ -63,7 +63,8 @@ class Logger:
     
     def _setup_file_handler(self, formatter: logging.Formatter):
         """设置文件日志处理器"""
-        log_dir = os.path.join("data", "logs")
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        log_dir = os.path.join(project_root,"data", "logs")
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
         

@@ -24,9 +24,9 @@ class LLMNode(Node):
         )
 
         if self.prompt_template:
-            self.prompt = ChatPromptTemplate.from_messages([
-                ("system", self.prompt_template)
-            ])
+            self.prompt = ChatPromptTemplate.from_template(
+                self.prompt_template
+            )
 
     def process(self, data: dict) -> dict:
         """
@@ -34,11 +34,14 @@ class LLMNode(Node):
         """
         context = data.get("context", "")
         request_id = str(int(time.time() * 1000))
+        db_name = data.get("db_name","")
+        user_query = data.get("user_query", "")
 
         # 使用prompt模板生成完整prompt
-        formatted_prompt = self.prompt.format(
+        formatted_prompt = self.prompt.format_messages(
+            db_name=db_name,
             context=context,
-            user_query=data.get("user_query", "")
+            user_query=user_query
         )
 
         response = self.llm.invoke(formatted_prompt)

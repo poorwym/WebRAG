@@ -5,9 +5,9 @@ import time
 class APIQueryNode(LLMNode):
     def __init__(self, node_id: str, config: dict = None):
         super().__init__(node_id, config)
-        
+        self.db_name = config.get("db_name", "")
         # 设置专门用于 API 查询的 prompt 模板
-        self.prompt_template = """请分析以下用户查询中可能涉及到的 Cesium API，并用简短的陈述句表达出来，不同api间用逗号间隔。
+        self.prompt_template = """请分析以下用户查询中可能涉及到的{db_name}API，并用简短的陈述句表达出来，不同api间用逗号间隔。
             只关注 API 相关的部分，不需要其他解释。
             如果查询中没有明确的 API 相关描述，请返回"无明确的 API 相关描述"。
 
@@ -16,10 +16,10 @@ class APIQueryNode(LLMNode):
 
             请用陈述句表达:"""
         
-        # 初始化 prompt 模板，确保只使用user_query作为输入变量
+        # 初始化 prompt 模板，确保使用user_query和db_name作为输入变量
         self.prompt = PromptTemplate(
             template=self.prompt_template,
-            input_variables=["user_query"]
+            input_variables=["user_query", "db_name"]
         )
 
     def process(self, data: dict) -> dict:
@@ -31,7 +31,8 @@ class APIQueryNode(LLMNode):
         
         # 使用 prompt 模板生成完整 prompt
         formatted_prompt = self.prompt.format(
-            user_query=user_query
+            user_query=user_query,
+            db_name=self.db_name
         )
 
         # 直接使用继承自LLMNode的llm对象，但使用我们自己的prompt

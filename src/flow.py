@@ -106,7 +106,8 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
             "model": llm_model_name,
             "base_url": base_url,
             "prompt_template": prompt_template,
-            "api_key": api_key
+            "api_key": api_key,
+            "db_name": db_name
         }
     )
     # 嵌入节点
@@ -139,7 +140,8 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
             "model": llm_model_name,
             "base_url": base_url,
             "prompt_template": prompt_template,
-            "api_key": api_key
+            "api_key": api_key,
+            "db_name": db_name
         }
     )
     # 输出节点
@@ -195,7 +197,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
     if progress_callback: progress_callback(80)
     context += f"检索结果: {data_after_retriever['context']}\n"
     try:
-        data_after_llm = llm_node.process({"context": context, "user_query": original_user_query})
+        data_after_llm = llm_node.process({"context": context, "user_query": original_user_query, "db_name": db_name})
     except Exception as e:
         logger.error(f"LLM生成失败: {e}")
         return "LLM生成失败"

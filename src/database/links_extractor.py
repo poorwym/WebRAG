@@ -36,7 +36,7 @@ class LinksExtractor:
         'Cache-Control': 'max-age=0',
     }
 
-    def __init__(self, db_name: str, max_depth: int = 3, num_threads: int = 20, file_path: str = None):
+    def __init__(self, db_name: str, max_depth: int = 3, num_threads: int = 20, file_path: str = None, required_prefix: str = None):
         """
         初始化链接提取器
         :param db_name: 数据库名称
@@ -47,6 +47,7 @@ class LinksExtractor:
         self.data_dir = os.path.join(self.config.project_root, 'data', 'database', db_name)
         self.max_depth = max_depth
         self.num_threads = num_threads
+        self.required_prefix = required_prefix
         self.logger = Logger("links_extractor")
         
         # 设置文件路径
@@ -124,8 +125,7 @@ class LinksExtractor:
     def process_page(
         self,
         url: str,
-        session: requests.Session,
-        required_prefix: str
+        session: requests.Session
     ) -> Set[str]:
         """
         处理单个页面并提取链接
@@ -145,7 +145,7 @@ class LinksExtractor:
                     continue
 
                 absolute_url = urljoin(url, href).split('#')[0]
-                if absolute_url.startswith(required_prefix):
+                if absolute_url.startswith(self.required_prefix):
                     found_links.add(absolute_url)
                     with self.file_lock:
                         if absolute_url not in self.existing_links:
@@ -168,8 +168,7 @@ class LinksExtractor:
     def worker(
         self,
         task_queue: queue.Queue,
-        session: requests.Session,
-        required_prefix: str
+        session: requests.Session
     ):
         """
         工作线程函数
@@ -181,7 +180,7 @@ class LinksExtractor:
                     task_queue.task_done()
                     continue
 
-                links = self.process_page(url, session, required_prefix)
+                links = self.process_page(url, session)
                 with self.links_lock:
                     self.all_links.update(links)
 
@@ -205,7 +204,6 @@ class LinksExtractor:
     def parallel_bfs_crawler(
         self,
         start_urls: List[str],
-        required_prefix: str
     ) -> Set[str]:
         """
         并行BFS爬虫主函数
@@ -224,7 +222,7 @@ class LinksExtractor:
         for i in range(self.num_threads):
             t = Thread(
                 target=self.worker,
-                args=(task_queue, sessions[i], required_prefix),
+                args=(task_queue, sessions[i]),
                 name=f"Worker-{i+1}",
                 daemon=True
             )
@@ -274,7 +272,7 @@ class LinksExtractor:
 
         return self.all_links
 
-    def process(self, required_prefix: str = "https://cesium.com/learn/"):
+    def process(self, required_prefix: str = ""):
         """
         处理入口函数
         """
@@ -285,6 +283,10 @@ class LinksExtractor:
         if not os.path.exists(self.urls_file):
             self.logger.error(f'错误：路径不存在: {self.urls_file}')
             return
+
+        # 如果required_prefix被提供，则更新self.required_prefix
+        if required_prefix:
+            self.required_prefix = required_prefix
 
         # 如果输出文件存在，则读取已有链接避免重复
         if os.path.exists(self.output_file):
@@ -311,19 +313,19 @@ class LinksExtractor:
 
         self.logger.info(f'最大递归深度: {self.max_depth}')
         self.logger.info(f'线程数: {self.num_threads}')
-        self.logger.info(f'只提取前缀: {required_prefix}')
+        self.logger.info(f'只提取前缀: {self.required_prefix}')
         self.logger.info(f'起始URL数量: {len(start_urls)}')
 
         start_time = time.time()
         try:
-            self.all_links = self.parallel_bfs_crawler(start_urls, required_prefix)
+            self.all_links = self.parallel_bfs_crawler(start_urls)
             end_time = time.time()
 
             valid_links_count = len(self.existing_links)
             error_links_count = sum(1 for _ in open(self.error_file, 'r', encoding='utf-8'))
 
             self.logger.info(f'爬取完成，耗时: {end_time - start_time:.2f} 秒')
-            self.logger.info(f'共找到 {valid_links_count} 个有效链接（前缀: {required_prefix}），已保存至: {self.output_file}')
+            self.logger.info(f'共找到 {valid_links_count} 个有效链接（前缀: {self.required_prefix}），已保存至: {self.output_file}')
             if error_links_count > 0:
                 self.logger.warning(f'有 {error_links_count} 个错误链接，详情见: {self.error_file}')
         except KeyboardInterrupt:

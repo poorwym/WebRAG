@@ -37,7 +37,7 @@ async def build_rag_database(db_name: str, file_path: str, embeddings_model: str
         
         # 2. 提取URL
         logger.info("开始提取URL...")
-        extractor = LinksExtractor(db_name=db_name, file_path=file_path)
+        extractor = LinksExtractor(db_name=db_name, file_path=file_path, required_prefix="https://docs.godotengine.org/zh-cn/4.3/")
         extractor.process()
         
         # 3. 下载网页内容
