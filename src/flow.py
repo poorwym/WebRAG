@@ -13,8 +13,12 @@ from nodes.output_node import OutputNode
 from nodes.api_query_node import APIQueryNode
 
 from utils.config_loader import ConfigLoader
+from utils.logger import Logger
 from conversations_manager import ConversationsManager
 from datetime import datetime
+
+# 初始化Logger
+logger = Logger("flow")
 
 def generate_title(conversation_id, context):
     config = ConfigLoader()
@@ -29,7 +33,7 @@ def generate_title(conversation_id, context):
     }
     data_after_llm = title_generator_node.process(input_data)
     title = data_after_llm["answer"]
-    print("生成标题:", title)
+    logger.info(f"生成标题: {title}")
     return title
 
 
@@ -57,7 +61,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
     # 如果conversation_id为None，创建新对话
     if conversation_id is None:
         conversation_id = conversations_manager.create_new_conversation()
-        print("创建新对话:", conversation_id)
+        logger.info(f"创建新对话: {conversation_id}")
     
     # 获取对话
     conversation = conversations_manager.get_conversation(conversation_id)
@@ -65,14 +69,14 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
         # 如果对话不存在，创建新对话
         conversation_id = conversations_manager.create_new_conversation()
         conversation = conversations_manager.get_conversation(conversation_id)
-        print("对话不存在，创建新对话:", conversation_id)
+        logger.info(f"对话不存在，创建新对话: {conversation_id}")
     
     # 获取对话中的消息
     title = conversation.get("title", "新对话")
     messages = conversation.get("messages", [])
 
-    print("当前位于对话:", conversation_id)
-    print("当前对话消息:", messages)
+    logger.info(f"当前位于对话: {conversation_id}")
+    logger.debug(f"当前对话消息: {messages}")
 
     context = ""
     
@@ -157,7 +161,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
     try:
         data_after_api_query = api_query_node.process(input_data)
     except Exception as e:
-        print(f"API查询失败: {e}")
+        logger.error(f"API查询失败: {e}")
         return "API查询失败"
 
     if status_callback: status_callback("正在生成嵌入向量...")
@@ -166,7 +170,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
     try:
         data_after_embedding = embedding_node.process({"api_description": api_description})
     except Exception as e:
-        print(f"嵌入向量生成失败: {e}")
+        logger.error(f"嵌入向量生成失败: {e}")
         return "嵌入向量生成失败"
     
     if status_callback: status_callback("正在向量数据库中检索相关文档...")
@@ -175,7 +179,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
     try:
         data_after_vdb = vectordb_node.process({"embeddings": embeddings})
     except Exception as e:
-        print(f"向量数据库检索失败: {e}")
+        logger.error(f"向量数据库检索失败: {e}")
         return "向量数据库检索失败"
     
     if status_callback: status_callback("正在处理检索结果...")
@@ -184,7 +188,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
     try:
         data_after_retriever = retriever_node.process({"retrieved_docs": retrieved_docs})
     except Exception as e:
-        print(f"检索结果处理失败: {e}")
+        logger.error(f"检索结果处理失败: {e}")
         return "检索结果处理失败"
     
     if status_callback: status_callback("AI正在生成回答...")
@@ -193,14 +197,14 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
     try:
         data_after_llm = llm_node.process({"context": context, "user_query": original_user_query})
     except Exception as e:
-        print(f"LLM生成失败: {e}")
+        logger.error(f"LLM生成失败: {e}")
         return "LLM生成失败"
     
     if progress_callback: progress_callback(95)
     try:
         final_result = output_node.process({"input": data_after_llm["answer"]})
     except Exception as e:
-        print(f"输出处理失败: {e}")
+        logger.error(f"输出处理失败: {e}")
         return "输出处理失败"
 
     # 更新对话
@@ -218,7 +222,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
         new_title = generate_title(conversation_id, original_user_query+"\n"+final_result["final_output"])
         conversations_manager.change_conversation_title_by_id(conversation_id, new_title)
     if progress_callback: progress_callback(100)
-    print("="*100)
+    logger.info("="*100)
     return final_result["final_output"]
 
 def status_callback(status_text):
@@ -228,7 +232,7 @@ def status_callback(status_text):
     参数:
     status_text: 状态文本
     """
-    print(status_text)
+    logger.info(status_text)
 
 def progress_callback(progress):
     """
@@ -237,7 +241,7 @@ def progress_callback(progress):
     参数:
     progress: 进度百分比
     """
-    print(f"进度: {progress}%")
+    logger.debug(f"进度: {progress}%")
 
 if __name__ == "__main__":
     while True:
@@ -247,9 +251,9 @@ if __name__ == "__main__":
         all_conversations = conversations_manager.get_all_conversations()
         # 打印所有对话的标题
         for conversation in all_conversations:
-            print("id:", conversation.get("id"))
-            print("title:", conversation.get("title"))
-            print("="*100)
+            logger.info(f"id: {conversation.get('id')}")
+            logger.info(f"title: {conversation.get('title')}")
+            logger.info("="*100)
         conversation_id = str(input("请输入对话id(没有默认创建新对话):"))
         if conversation_id == "":
             conversation_id = conversations_manager.create_new_conversation()

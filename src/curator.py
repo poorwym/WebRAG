@@ -4,11 +4,11 @@
 import os
 import re
 import argparse
-import logging
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from utils.config_loader import ConfigLoader
 from tqdm import tqdm
+from utils.logger import Logger
 
 try:
     import html2text
@@ -16,13 +16,8 @@ try:
 except ImportError:
     H2T_AVAILABLE = False
 
-# 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger(__name__)
+# 初始化Logger
+logger = Logger("curator")
 
 class PageCurator:
     def __init__(self, input_dir, config, db_name=""):

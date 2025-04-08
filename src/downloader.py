@@ -5,8 +5,10 @@ import aiofiles
 from urllib.parse import urlparse
 import time
 from utils.config_loader import ConfigLoader
+from utils.logger import Logger
 
 config = ConfigLoader()
+logger = Logger("downloader")
 
 class SimpleAsyncDownloader:
     def __init__(self, delay=1.0, max_connections=10, db_name=""):
@@ -16,6 +18,7 @@ class SimpleAsyncDownloader:
         self.total_downloaded = 0
         self.skipped = 0
         self.downloaded_sites_dir = os.path.join(config.project_root, "data", "downloaded_sites", db_name)
+        self.logger = Logger("downloader")
 
     async def fetch_and_save(self, session, url):
         filepath = os.path.join(self.downloaded_sites_dir, url.split("/")[-1])
@@ -24,7 +27,7 @@ class SimpleAsyncDownloader:
 
         # 已存在跳过
         if os.path.exists(filepath):
-            print(f"已存在，跳过：{url}")
+            self.logger.info(f"已存在，跳过：{url}")
             self.skipped += 1
             return
 
@@ -44,12 +47,12 @@ class SimpleAsyncDownloader:
                         os.makedirs(os.path.dirname(filepath), exist_ok=True)
                         async with aiofiles.open(filepath, 'wb') as f:
                             await f.write(content)
-                        print(f"下载成功：{url}")
+                        self.logger.info(f"下载成功：{url}")
                         self.total_downloaded += 1
                     else:
-                        print(f"请求失败：{url}，状态码：{resp.status}")
+                        self.logger.warning(f"请求失败：{url}，状态码：{resp.status}")
         except Exception as e:
-            print(f"下载出错：{url}，错误：{e}")
+            self.logger.error(f"下载出错：{url}，错误：{e}")
 
     async def run(self, url_list_file):
         with open(url_list_file, 'r') as f:
@@ -59,7 +62,7 @@ class SimpleAsyncDownloader:
             tasks = [self.fetch_and_save(session, url) for url in urls]
             await asyncio.gather(*tasks)
 
-        print(f"\n下载完成：共 {self.total_downloaded} 个页面，跳过 {self.skipped} 个")
+        self.logger.info(f"\n下载完成：共 {self.total_downloaded} 个页面，跳过 {self.skipped} 个")
 
 if __name__ == "__main__":
     import argparse
@@ -71,6 +74,7 @@ if __name__ == "__main__":
     downloader = SimpleAsyncDownloader(delay=args.delay, max_connections=args.max, db_name="cesium")
     file_path = os.path.join(config.project_root, "data", "urls", "extracted_links.txt")
     if os.path.exists(file_path):
+        logger.info(f"开始从文件加载URL: {file_path}")
         asyncio.run(downloader.run(file_path))
     else:
-        print(f"文件不存在：{file_path}")
+        logger.error(f"文件不存在：{file_path}")

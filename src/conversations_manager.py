@@ -3,9 +3,13 @@ import json
 from datetime import datetime
 from typing import List, Dict, Optional, Union
 import uuid
+from utils.logger import Logger
 
 class ConversationsManager:
     def __init__(self, conversations_dir=None):
+        # 初始化logger
+        self.logger = Logger("conversations_manager")
+        
         # 自动定位项目根目录
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # src/conversation/ --> src/ --> 根目录
         default_dir = os.path.join(project_root, "data", "conversations")
@@ -21,8 +25,9 @@ class ConversationsManager:
         """确保对话目录存在"""
         try:
             os.makedirs(self.conversations_dir, exist_ok=True)
-            print(f"对话目录已创建: {self.conversations_dir}")
+            self.logger.info(f"对话目录已创建: {self.conversations_dir}")
         except Exception as e:
+            self.logger.error(f"无法创建对话目录 {self.conversations_dir}: {str(e)}")
             raise RuntimeError(f"无法创建对话目录 {self.conversations_dir}: {str(e)}")
 
     def load_conversations(self):
@@ -38,10 +43,11 @@ class ConversationsManager:
                             for conv in data.get('conversations', []):
                                 self.conversations[conv['id']] = conv
                     except json.JSONDecodeError as e:
-                        print(f"警告：无法解析文件 {file_path}: {str(e)}")
+                        self.logger.warning(f"无法解析文件 {file_path}: {str(e)}")
                     except Exception as e:
-                        print(f"警告：读取文件 {file_path} 时出错: {str(e)}")
+                        self.logger.warning(f"读取文件 {file_path} 时出错: {str(e)}")
         except Exception as e:
+            self.logger.error(f"加载对话时出错: {str(e)}")
             raise RuntimeError(f"加载对话时出错: {str(e)}")
 
     def save_conversation(self, conversation: Dict):
@@ -76,6 +82,7 @@ class ConversationsManager:
             # 清理临时文件
             if temp_file and os.path.exists(temp_file):
                 os.remove(temp_file)
+            self.logger.error(f"保存对话时出错: {str(e)}")
             raise RuntimeError(f"保存对话时出错: {str(e)}")
 
     def get_conversation(self, conversation_id: str) -> Optional[Dict]:
@@ -90,9 +97,12 @@ class ConversationsManager:
                 if os.path.exists(file_path):
                     os.remove(file_path)
                 del self.conversations[conversation_id]
+                self.logger.info(f"删除对话 {conversation_id} 成功")
                 return True
+            self.logger.warning(f"要删除的对话 {conversation_id} 不存在")
             return False
         except Exception as e:
+            self.logger.error(f"删除对话时出错: {str(e)}")
             raise RuntimeError(f"删除对话时出错: {str(e)}")
 
     def get_all_conversations(self) -> List[Dict]:
@@ -137,6 +147,7 @@ class ConversationsManager:
             "messages": []
         }
         # 保存新对话（同时更新内存和文件）
+        self.logger.info(f"创建新对话: {conversation_id}")
         return self.save_conversation(new_conversation)
     
     def update_conversation(self, conversation_id: str, updates: Dict) -> bool:
@@ -147,11 +158,13 @@ class ConversationsManager:
             self.save_conversation(current_conversation)
             return True
         else:
+            self.logger.error(f"对话ID {conversation_id} 不存在")
             raise ValueError(f"对话ID {conversation_id} 不存在")
     
     def add_message_to_conversation(self, conversation_id: str, role: str, content: str) -> bool:
         """向对话添加新消息并保存"""
         if conversation_id not in self.conversations:
+            self.logger.error(f"对话ID {conversation_id} 不存在")
             raise ValueError(f"对话ID {conversation_id} 不存在")
             
         conversation = self.conversations[conversation_id].copy()
@@ -173,7 +186,9 @@ class ConversationsManager:
         if conversation_id in self.conversations:
             self.conversations[conversation_id]['title'] = title
             self.save_conversation(self.conversations[conversation_id])
+            self.logger.info(f"已更新对话 {conversation_id} 的标题为: {title}")
             return True
+        self.logger.warning(f"要更新标题的对话 {conversation_id} 不存在")
         return False
     
     
