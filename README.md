@@ -40,7 +40,7 @@ WebRAG 是一个基于 RAG (Retrieval-Augmented Generation) 的网页内容检�
 
 1. 克隆项目：
 ```bash
-git clone https://github.com/yourusername/WebRAG.git
+git clone https://github.com/poorwym/WebRAG.git
 cd WebRAG
 ```
 
