@@ -38,7 +38,7 @@ def generate_title(conversation_id, context):
 
 
 # 添加用于从GUI调用的函数
-def process_query(query, status_callback=None, progress_callback=None, conversation_id=None):
+def process_query(query, status_callback=None, progress_callback=None, conversation_id=None, db_name=None):
     """
     处理用户查询并返回结果
     
@@ -123,7 +123,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
         node_id="vectordb_node",
         config={
             "model": embedding_model_name,
-            "persist_directory": persist_dir,
+            "persist_directory": os.path.join(persist_dir, db_name),
             "base_url": base_url,
             "api_key": api_key
         }
@@ -257,6 +257,24 @@ if __name__ == "__main__":
         conversation_id = str(input("请输入对话id(没有默认创建新对话):"))
         if conversation_id == "":
             conversation_id = conversations_manager.create_new_conversation()
+        # 获取所有数据库名称
+        db_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "database")
+        db_names = []
+        if os.path.exists(db_dir):
+            db_names = [name for name in os.listdir(db_dir) if os.path.isdir(os.path.join(db_dir, name))]
+        
+        if not db_names:
+            logger.error("未找到任何数据库,请先构建数据库")
+            exit()
+            
+        logger.info("可用的数据库:")
+        for i, name in enumerate(db_names):
+            logger.info(f"{i}: {name}")
+            
+        db_name = str(input("请选择要使用的数据库名称:"))
+        if db_name not in db_names:
+            logger.error("数据库名称不存在")
+            exit()
         query = str(input("请输入你的问题："))
-        result = process_query(query, status_callback, progress_callback, conversation_id)
+        result = process_query(query, status_callback, progress_callback, conversation_id, db_name)
         print(result)

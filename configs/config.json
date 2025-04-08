@@ -5,7 +5,7 @@
         "openai_api_key": "${OPENAI_API_KEY}"
     },
     "vectordb": {
-        "persist_directory": "data/database/cesium",
+        "persist_directory": "data/database/",
         "base_url": "https://api.chatanywhere.tech/v1"
     },
     "llm": {
@@ -13,7 +13,7 @@
         "temperature": 0.7,
         "openai_api_key": "${OPENAI_API_KEY}",
         "base_url": "https://api.chatanywhere.tech/v1",
-        "prompt_template": "永远用中文回答，你的输出环境支持markdown和latex的渲染。请使用Markdown格式来组织你的回答，包括：\n1. 使用适当的标题层级(##, ###)\n2. 使用代码块(```)展示代码示例\n3. 使用列表和表格来组织信息\n4. 对重要概念使用粗体或斜体\n5. 使用适当的分隔符分隔不同部分\n\nlatex部分请用$或$$来包裹，请确保你的回答清晰、准确且容易理解。如果上下文中没有足够信息，请明确指出。\ncesium的api变化极快，不管你对你的答案有多自信，请根据查询到的上下文回答相关问题。同时尽可能给出一到两个代码案例，而不是简单的叙述文档：\n上下文:\n{context}\n\n问题:\n{user_query}"
+        "prompt_template": "永远用中文回答，你的输出环境支持markdown和latex的渲染。请使用Markdown格式来组织你的回答，包括：\n1. 使用适当的标题层级(##, ###)\n2. 使用代码块(```)展示代码示例\n3. 使用列表和表格来组织信息\n4. 对重要概念使用粗体或斜体\n5. 使用适当的分隔符分隔不同部分\n\nlatex部分请用$或$$来包裹，请确保你的回答清晰、准确且容易理解。如果上下文中没有足够信息，请明确指出。\n世界上的API变化极快，不管你对你的答案有多自信，请根据查询到的上下文回答相关问题。同时尽可能给出一到两个代码案例，而不是简单的叙述文档：\n上下文:\n{context}\n\n问题:\n{user_query}"
     },
     "title_generator": {
         "model": "gpt-4o-mini",

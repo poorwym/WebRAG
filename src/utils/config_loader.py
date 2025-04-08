@@ -12,7 +12,7 @@ class ConfigLoader:
         env_path = os.path.join(self.project_root, 'configs', '.env')
         load_dotenv(env_path)
         try:
-            self.logger.info("OPENAI_API_KEY: ", os.getenv("OPENAI_API_KEY"))
+            self.logger.info(f"OPENAI_API_KEY: {os.getenv('OPENAI_API_KEY')}")
             pass
         except Exception as e:
             self.logger.error(f"加载 .env 文件失败: {e}")
