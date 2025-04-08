@@ -1,12 +1,16 @@
 import os
 import sys
-import utils.config_loader as ConfigLoader
+from utils.config_loader import ConfigLoader
 
 # 获取项目根目录
-PROJECT_ROOT = ConfigLoader.project_root
-os.mkdir(os.path.join(PROJECT_ROOT, 'data', 'database'))
-os.mkdir(os.path.join(PROJECT_ROOT, 'data', 'conversations'))
-os.mkdir(os.path.join(PROJECT_ROOT, 'data', 'logs'))
+config = ConfigLoader()
+PROJECT_ROOT = config.project_root
+try:
+    os.mkdir(os.path.join(PROJECT_ROOT, 'data', 'database'))
+    os.mkdir(os.path.join(PROJECT_ROOT, 'data', 'conversations'))
+    os.mkdir(os.path.join(PROJECT_ROOT, 'data', 'logs'))
+except Exception as e:
+    print(f"创建目录时出错: {e}")
 
 
 
