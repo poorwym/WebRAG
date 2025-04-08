@@ -44,10 +44,11 @@ class ProcessingThread(QThread):
     status_update = pyqtSignal(str)
     progress_update = pyqtSignal(int)
     
-    def __init__(self, query, conversation_id=None):
+    def __init__(self, query, conversation_id=None, db_name=None):
         super().__init__()
         self.query = query
         self.conversation_id = conversation_id
+        self.db_name = db_name
         
     def run(self):
         try:
@@ -57,7 +58,8 @@ class ProcessingThread(QThread):
                 self.query, 
                 status_callback=self.status_update.emit,
                 progress_callback=self.progress_update.emit,
-                conversation_id=self.conversation_id
+                conversation_id=self.conversation_id,
+                db_name=self.db_name
             )
             
             # 发送结果信号
@@ -275,7 +277,7 @@ class WebRagGUI(QMainWindow):
         content_layout.setContentsMargins(10, 10, 10, 10)
         
         # 创建标题标签
-        title_label = QLabel('Cesium API 查询助手')
+        title_label = QLabel('WebRAG 助手')
         title_label.setAlignment(Qt.AlignCenter)
         title_font = QFont()
         title_font.setPointSize(16)
@@ -301,8 +303,42 @@ class WebRagGUI(QMainWindow):
         self.conversation_title_label.setFixedHeight(40)  # 设置固定高度为40像素
         content_layout.addWidget(self.conversation_title_label)
         
+        # 创建数据库选择区域
+        db_label = QLabel('请选择知识库:')
+        db_label.setFixedHeight(30)  # 设置固定高度为30像素
+        content_layout.addWidget(db_label)
+        
+        # 添加数据库选择下拉框
+        self.db_selector = QComboBox()
+        self.db_selector.setStyleSheet("""
+            QComboBox {
+                background-color: #ffecf1;
+                color: #5a5a5a;
+                border: 1px solid #ffcce0;
+                border-radius: 5px;
+                padding: 5px;
+                min-height: 30px;
+            }
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 20px;
+                border-left: 1px solid #ffcce0;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #fff5f8;
+                color: #5a5a5a;
+                selection-background-color: #ffd6e5;
+                selection-color: #5a5a5a;
+            }
+        """)
+        content_layout.addWidget(self.db_selector)
+        
+        # 加载可用数据库
+        self.load_databases()
+        
         # 创建输入区域
-        input_label = QLabel('请输入您的Cesium相关问题:')
+        input_label = QLabel('请输入你的问题:')
         input_label.setFixedHeight(40)  # 设置固定高度为40像素
         content_layout.addWidget(input_label)
         
@@ -417,6 +453,12 @@ class WebRagGUI(QMainWindow):
         if not self.current_conversation_id:
             self.create_new_conversation()
         
+        # 获取选中的数据库名称
+        db_name = self.db_selector.currentText()
+        if db_name == "未找到可用数据库":
+            self.status_label.setText('请先构建数据库')
+            return
+            
         # 更新状态
         self.status_label.setText('处理中...')
         self.submit_button.setEnabled(False)
@@ -426,7 +468,7 @@ class WebRagGUI(QMainWindow):
         self.loading_animation.start()
         
         # 创建处理线程
-        self.processing_thread = ProcessingThread(query, self.current_conversation_id)
+        self.processing_thread = ProcessingThread(query, self.current_conversation_id, db_name)
         self.processing_thread.result_ready.connect(self.update_result)
         self.processing_thread.status_update.connect(self.update_status)
         self.processing_thread.progress_update.connect(self.update_progress)
@@ -868,6 +910,37 @@ class WebRagGUI(QMainWindow):
         
         # 接受关闭事件
         event.accept()
+
+    def load_databases(self):
+        """加载可用的数据库到下拉菜单"""
+        # 清空下拉框
+        self.db_selector.clear()
+        
+        # 获取数据库目录
+        import os
+        db_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "database")
+        db_names = []
+        
+        # 如果目录存在，获取所有子目录作为数据库
+        if os.path.exists(db_dir):
+            db_names = [name for name in os.listdir(db_dir) if os.path.isdir(os.path.join(db_dir, name))]
+        
+        # 如果没有找到数据库，显示提示
+        if not db_names:
+            self.db_selector.addItem("未找到可用数据库")
+            self.db_selector.setEnabled(False)
+            self.submit_button.setEnabled(False)
+            self.status_label.setText("未找到可用数据库，请先构建数据库")
+            return
+        
+        # 添加数据库到下拉框
+        for db_name in db_names:
+            self.db_selector.addItem(db_name)
+        
+        # 默认选择第一个数据库
+        if self.db_selector.count() > 0:
+            self.db_selector.setCurrentIndex(0)
+            self.submit_button.setEnabled(True)
 
 def main():
     app = QApplication(sys.argv)
