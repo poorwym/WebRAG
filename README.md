@@ -61,12 +61,13 @@ OPENAI_API_KEY=your-api-key
 ## 使用方法
 1. 从url构建database
 ```bash
-python src/build_db.py --db-name {db_name} --file-path {file_path}
+python src/build_db.py --db-name {db_name} --file-path {file_path} --required-prefix {required_prefix}
 ```
 url提取采取嵌套提取，深度限制为3.
 参数说明：
 - `db_name`: 你的知识库名称
 - `file_path`: 存放你需要提取的url目录,项目自带[cesium参考文档入口](./websites.txt)作为示例。
+- `required_prefix`: 用于筛选的url前缀，默认为空
 
 示例：
 ```python

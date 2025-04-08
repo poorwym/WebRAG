@@ -24,7 +24,7 @@ async def download_urls(db_name: str, file_path: str, delay: float = 1.0, max_co
         logger.error(f"文件不存在：{file_path}")
         raise FileNotFoundError(f"URL文件不存在：{file_path}")
 
-async def build_rag_database(db_name: str, file_path: str, embeddings_model: str):
+async def build_rag_database(db_name: str, file_path: str, embeddings_model: str, required_prefix: str = ""):
     """
     从URL文件构建RAG数据库的完整流程
     """
@@ -37,7 +37,7 @@ async def build_rag_database(db_name: str, file_path: str, embeddings_model: str
         
         # 2. 提取URL
         logger.info("开始提取URL...")
-        extractor = LinksExtractor(db_name=db_name, file_path=file_path, required_prefix="https://pro.arcgis.com/en/pro-app/3.4/")
+        extractor = LinksExtractor(db_name=db_name, file_path=file_path, required_prefix=required_prefix)
         extractor.process()
         
         # 3. 下载网页内容
@@ -68,13 +68,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Build RAG database')
     parser.add_argument('--db-name', type=str, default='cesium', help='用于构建数据库的名称')
     parser.add_argument('--file-path', type=str, default='data/database/cesium/urls/extracted_links.txt', help='包含URL的文件路径')
+    parser.add_argument('--required-prefix', type=str, default='', help='URL前缀')
     args = parser.parse_args()
     
     db_name = args.db_name
     file_path = args.file_path
+    required_prefix = args.required_prefix
     
     logger.info(f"db_name: {db_name}")
     logger.info(f"file_path: {file_path}")
+    logger.info(f"required_prefix: {required_prefix}")
     
     # 选择embedding模型
     logger.info("请选择embedding模型:")
@@ -90,4 +93,4 @@ if __name__ == "__main__":
     logger.info(f"embeddings_model: {embeddings_model}")
 
     # 执行完整的RAG数据库构建流程
-    asyncio.run(build_rag_database(db_name, file_path, embeddings_model))
+    asyncio.run(build_rag_database(db_name, file_path, embeddings_model, required_prefix))
