@@ -68,11 +68,16 @@ url提取采取嵌套提取，深度限制为3.
 - `db_name`: 你的知识库名称
 - `file_path`: 存放你需要提取的url目录,项目自带[cesium参考文档入口](./websites.txt)作为示例。
 
-2. CLI交互
+示例：
+```python
+python src/build_db.py --db-name cesium --file-path ./websites.txt
+```
+
+1. CLI交互
 ```bash
 python src/flow.py
 ```
-3. GUI交互
+1. GUI交互
 ```bash
 python src/gui.py
 ```
