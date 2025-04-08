@@ -121,7 +121,7 @@ class LoadingAnimation(QWidget):
     def set_progress(self, value):
         self.progress_bar.setValue(value)
 
-class CesiumRagGUI(QMainWindow):
+class WebRagGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         # 初始化对话管理器
@@ -158,7 +158,7 @@ class CesiumRagGUI(QMainWindow):
         
     def initUI(self):
         # 设置窗口标题和大小
-        self.setWindowTitle('Cesium RAG助手')
+        self.setWindowTitle('WebRAG助手')
         self.setMinimumSize(1000, 600)
         
         # 创建中央窗口部件
@@ -873,7 +873,7 @@ def main():
     app = QApplication(sys.argv)
     app_icon = QIcon("assets/icon.png")
     app.setWindowIcon(app_icon)
-    ex = CesiumRagGUI()
+    ex = WebRagGUI()
     sys.exit(app.exec_())
 
 if __name__ == '__main__':

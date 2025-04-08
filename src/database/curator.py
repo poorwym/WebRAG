@@ -4,11 +4,16 @@
 import os
 import re
 import argparse
+import sys
+# 添加项目根目录到系统路径
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(project_root)
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from utils.config_loader import ConfigLoader
+from src.utils.config_loader import ConfigLoader
 from tqdm import tqdm
-from utils.logger import Logger
+
+from src.utils.logger import Logger
 
 try:
     import html2text
@@ -23,7 +28,7 @@ class PageCurator:
     def __init__(self, input_dir, config, db_name=""):
         self.input_dir = input_dir
         self.config = config
-        self.output_dir = os.path.join(self.config.project_root, "data", "curated", db_name)
+        self.output_dir = os.path.join(self.config.project_root, "data", "database", db_name, "curated")
         logger.info(f"初始化PageCurator: 输入目录={input_dir}, 输出目录={self.output_dir}")
 
     def clean_html(self, html):
@@ -161,14 +166,16 @@ class PageCurator:
         logger.info(f"目录处理完成: 总共处理 {processed} 个文件, 失败 {failed} 个.")
         print(f"总共处理 {processed} 个文件, 失败 {failed} 个.")
 
-if __name__ == "__main__":
+def process(db_name: str):
     config = ConfigLoader()
-    db_name = "cesium"
-    data_dir = os.path.join(config.project_root, "data")
-    input_dir = os.path.join(data_dir, "downloaded_sites", db_name)
+    data_dir = os.path.join(config.project_root, "data", "database", db_name)
+    input_dir = os.path.join(data_dir, "downloaded_sites")
 
     max_threads = 20
     
     logger.info(f"启动页面整理器，使用 {max_threads} 个线程")
     curator = PageCurator(input_dir, config, db_name=db_name)
     curator.process_directory(max_workers=max_threads)
+
+if __name__ == "__main__":
+    process("cesium")

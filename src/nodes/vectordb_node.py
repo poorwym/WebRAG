@@ -10,7 +10,7 @@ class VectorDBNode(Node):
         用于连接向量数据库(如Chroma)的节点。
         """
         super().__init__(node_id, config)
-        persist_directory = os.path.join(config.get("persist_directory"), config.get("model"))
+        persist_directory = os.path.join(config.get("persist_directory"), "chroma_openai", config.get("model"))
 
         if not os.path.exists(persist_directory):
             raise ValueError(f"向量数据库不存在: {persist_directory}")
@@ -37,7 +37,7 @@ class VectorDBNode(Node):
         # 在Chroma中检索k条最相似文档
         docs = []
         for embedding in embeddings:
-            docs.extend(self.vectordb.similarity_search_by_vector(embedding, k=3))
+            docs.extend(self.vectordb.similarity_search_by_vector(embedding, k=10))
         
         return {
             "retrieved_docs": docs,

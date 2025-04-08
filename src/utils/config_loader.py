@@ -2,18 +2,20 @@ import os
 import json
 import re
 from dotenv import load_dotenv
+from .logger import Logger
 
 class ConfigLoader:
     def __init__(self, config_path=None):
         self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.logger = Logger("config_loader")
         # 加载 .env 文件
         env_path = os.path.join(self.project_root, 'configs', '.env')
         load_dotenv(env_path)
         try:
-            #print("OPENAI_API_KEY: ", os.getenv("OPENAI_API_KEY"))
+            self.logger.info("OPENAI_API_KEY: ", os.getenv("OPENAI_API_KEY"))
             pass
         except Exception as e:
-            print(e)
+            self.logger.error(f"加载 .env 文件失败: {e}")
 
         # 加载 embedding_model_list.json
         embedding_model_path = os.path.join(self.project_root, 'configs', 'embedding_model_list.json')

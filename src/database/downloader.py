@@ -4,8 +4,14 @@ import asyncio
 import aiofiles
 from urllib.parse import urlparse
 import time
-from utils.config_loader import ConfigLoader
-from utils.logger import Logger
+import sys
+
+# 添加项目根目录到系统路径
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(project_root)
+
+from src.utils.config_loader import ConfigLoader
+from src.utils.logger import Logger
 
 config = ConfigLoader()
 logger = Logger("downloader")
@@ -17,7 +23,7 @@ class SimpleAsyncDownloader:
         self.last_request_time = {}
         self.total_downloaded = 0
         self.skipped = 0
-        self.downloaded_sites_dir = os.path.join(config.project_root, "data", "downloaded_sites", db_name)
+        self.downloaded_sites_dir = os.path.join(config.project_root, "data", "database", db_name, "downloaded_sites")
         self.logger = Logger("downloader")
 
     async def fetch_and_save(self, session, url):
@@ -64,17 +70,20 @@ class SimpleAsyncDownloader:
 
         self.logger.info(f"\n下载完成：共 {self.total_downloaded} 个页面，跳过 {self.skipped} 个")
 
-if __name__ == "__main__":
+def process(db_name: str):
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--delay", "-d", type=float, default=1.0)
     parser.add_argument("--max", "-m", type=int, default=10)
     args = parser.parse_args()
 
-    downloader = SimpleAsyncDownloader(delay=args.delay, max_connections=args.max, db_name="cesium")
-    file_path = os.path.join(config.project_root, "data", "urls", "extracted_links.txt")
+    downloader = SimpleAsyncDownloader(delay=args.delay, max_connections=args.max, db_name=db_name)
+    file_path = os.path.join(config.project_root, "data", "database", db_name, "urls", "extracted_links.txt")
     if os.path.exists(file_path):
         logger.info(f"开始从文件加载URL: {file_path}")
         asyncio.run(downloader.run(file_path))
     else:
         logger.error(f"文件不存在：{file_path}")
+
+if __name__ == "__main__":
+    process("cesium")

@@ -1,106 +1,93 @@
-import os
-from langchain_community.document_loaders import DirectoryLoader, TextLoader, UnstructuredPDFLoader, UnstructuredWordDocumentLoader, UnstructuredMarkdownLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
-import openai
-import shutil
-from utils.logger import Logger
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-# 设置 OpenAI API 密钥和基础 URL
-openai.base_url = "https://api.chatanywhere.tech/v1"
-
-# 创建logger实例
-logger = Logger("build_db")
-
-# 1. 加载文件夹中的所有文档
-def load_documents_from_folder(folder_path):
-    logger.info(f"开始扫描目录: {folder_path}")
-    loaders = [
-        DirectoryLoader(folder_path, glob="**/*.txt", loader_cls=TextLoader, show_progress=True),
-        DirectoryLoader(folder_path, glob="**/*.pdf", loader_cls=UnstructuredPDFLoader, show_progress=True),
-        DirectoryLoader(folder_path, glob="**/*.docx", loader_cls=UnstructuredWordDocumentLoader, show_progress=True),
-        DirectoryLoader(folder_path, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader, show_progress=True),
-    ]
-    all_docs = []
-    for loader in loaders:
-        try:
-            docs = loader.load()
-            logger.info(f"使用 {loader.__class__.__name__} 加载了 {len(docs)} 篇文档")
-            all_docs.extend(docs)
-        except Exception as e:
-            logger.error(f"使用 {loader.__class__.__name__} 加载文档时出错: {str(e)}")
-    return all_docs
-
-# 2. 分割文档
-def split_documents(docs, chunk_size=500, chunk_overlap=50):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    return splitter.split_documents(docs)
-
-# 3. 构建 embedding 并持久化
-def build_vectorstore(docs, persist_path, embeddings_model):
-    embeddings = OpenAIEmbeddings(
-        model=embeddings_model,
-        base_url="https://api.chatanywhere.tech/v1",
-        api_key=os.getenv("OPENAI_API_KEY")
-    )
-    vectordb = Chroma.from_documents(documents=docs, embedding=embeddings, persist_directory=persist_path)
-    vectordb.persist()
-    return vectordb
-
+from database.vectorizator import process
+from database.downloader import SimpleAsyncDownloader
+from database.curator import PageCurator
+from database.init_db import init_db
+from database.links_extractor import LinksExtractor
 from utils.config_loader import ConfigLoader
+from utils.logger import Logger
+import argparse
+import os
+import asyncio
 
-config = ConfigLoader()
-
-logger.info("请选择embedding模型:")
-for i, embedding_model in enumerate(config.embedding_model_list):
-    print(f"{i}: {embedding_model}")
-
-embedding_model_name = str(input("请输入你的选择: "))
-if embedding_model_name not in config.embedding_model_list:
-    logger.error("embedding_model_name 不存在")
-    exit()
-
-embeddings_model = config.embedding_model_list[embedding_model_name]
-logger.info(f"embeddings_model: {embeddings_model}")
-
-
-db_name = str(input("请输入向量数据库名称: "))
-logger.info(f"db_name: {db_name}")
-
-'''
-folder_name = str(input("请输入文件夹名称: "))
-print("folder_name: ", folder_name)
-'''
-
-folder_path = os.path.join(config.project_root, "data", "curated", "cesium")
-persist_path = os.path.join(config.project_root, "data", "chroma_openai", db_name, embeddings_model['model'])
-if os.path.exists(persist_path):
-    logger.warning("向量数据库已存在，请选择是否删除[y/N]")
-    choice = input("请输入你的选择: ")
-    if choice == "y":
-        shutil.rmtree(persist_path)
-        logger.info("向量数据库已删除")
+async def download_urls(db_name: str, file_path: str, delay: float = 1.0, max_connections: int = 10):
+    """
+    下载URL列表中的网页内容
+    """
+    downloader = SimpleAsyncDownloader(delay=delay, max_connections=max_connections, db_name=db_name)
+    if os.path.exists(file_path):
+        logger.info(f"开始从文件加载URL: {file_path}")
+        await downloader.run(file_path)
     else:
-        logger.info("已取消删除")
+        logger.error(f"文件不存在：{file_path}")
+        raise FileNotFoundError(f"URL文件不存在：{file_path}")
+
+async def build_rag_database(db_name: str, file_path: str, embeddings_model: str):
+    """
+    从URL文件构建RAG数据库的完整流程
+    """
+    logger = Logger("build_db")
+    
+    try:
+        # 1. 初始化数据库目录结构
+        logger.info("初始化数据库目录结构...")
+        init_db(db_name)
+        
+        # 2. 提取URL
+        logger.info("开始提取URL...")
+        extractor = LinksExtractor(db_name=db_name, file_path=file_path)
+        extractor.process()
+        
+        # 3. 下载网页内容
+        logger.info("开始下载网页内容...")
+        extracted_links_path = os.path.join("data", "database", db_name, "urls", "extracted_links.txt")
+        await download_urls(db_name, extracted_links_path)
+        
+        # 4. 处理下载的内容
+        logger.info("处理下载的内容...")
+        input_dir = os.path.join("data", "database", db_name, "downloaded_sites")
+        curator = PageCurator(input_dir, ConfigLoader(), db_name=db_name)
+        curator.process_directory(max_workers=8)
+        
+        # 5. 向量化存储
+        logger.info("开始向量化存储...")
+        process(db_name, embeddings_model)
+        
+        logger.info("RAG数据库构建完成！")
+        
+    except Exception as e:
+        logger.error(f"构建RAG数据库时发生错误: {str(e)}")
+        raise
+
+if __name__ == "__main__":
+    config = ConfigLoader()
+    logger = Logger("build_db")
+    
+    parser = argparse.ArgumentParser(description='Build RAG database')
+    parser.add_argument('--db-name', type=str, default='cesium', help='用于构建数据库的名称')
+    parser.add_argument('--file-path', type=str, default='data/database/cesium/urls/extracted_links.txt', help='包含URL的文件路径')
+    args = parser.parse_args()
+    
+    db_name = args.db_name
+    file_path = args.file_path
+    
+    logger.info(f"db_name: {db_name}")
+    logger.info(f"file_path: {file_path}")
+    
+    # 选择embedding模型
+    logger.info("请选择embedding模型:")
+    for i, embedding_model in enumerate(config.embedding_model_list):
+        print(f"{i}: {embedding_model}")
+
+    embedding_model_name = str(input("请输入你的选择(输入完整模型名，例如text-embedding-3-small): "))
+    if embedding_model_name not in config.embedding_model_list:
+        logger.error("embedding_model_name 不存在")
         exit()
 
-if not os.path.exists(folder_path):
-    logger.error(f"文件夹 {folder_path} 不存在")
-    exit()
+    embeddings_model = config.embedding_model_list[embedding_model_name]
+    logger.info(f"embeddings_model: {embeddings_model}")
 
-logger.info(f"embeddings_model: {embeddings_model}")
-logger.info(f"folder_path: {str(folder_path)}")
-logger.info(f"persist_path: {str(persist_path)}")
-
-
-logger.info("加载文件...")
-raw_docs = load_documents_from_folder(folder_path)
-
-logger.info(f"共加载 {len(raw_docs)} 篇文档，开始切分...")
-split_docs = split_documents(raw_docs)
-
-logger.info(f"共切分为 {len(split_docs)} 段，开始构建向量库并持久化...")
-build_vectorstore(split_docs, persist_path, embeddings_model['model'])
-
-logger.info("构建完毕，向量数据库已持久化。")
+    # 执行完整的RAG数据库构建流程
+    asyncio.run(build_rag_database(db_name, file_path, embeddings_model))
