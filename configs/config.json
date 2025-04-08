@@ -1,6 +1,6 @@
 {
     "embedding": {
-        "model": "text-embedding-3-small",
+        "model": "text-embedding-3-large",
         "base_url": "https://api.chatanywhere.tech/v1",
         "openai_api_key": "${OPENAI_API_KEY}"
     },
