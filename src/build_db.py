@@ -66,8 +66,8 @@ if __name__ == "__main__":
     logger = Logger("build_db")
     
     parser = argparse.ArgumentParser(description='Build RAG database')
-    parser.add_argument('--db-name', type=str, default='cesium', help='用于构建数据库的名称')
-    parser.add_argument('--file-path', type=str, default='data/database/cesium/urls/extracted_links.txt', help='包含URL的文件路径')
+    parser.add_argument('--db-name', type=str, default='default', help='用于构建数据库的名称')
+    parser.add_argument('--file-path', type=str, default='./websites.txt', help='包含URL的文件路径')
     parser.add_argument('--required-prefix', type=str, default='', help='URL前缀')
     args = parser.parse_args()
     

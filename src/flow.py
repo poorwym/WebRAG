@@ -38,7 +38,7 @@ def generate_title(conversation_id, context):
 
 
 # 添加用于从GUI调用的函数
-def process_query(query, status_callback=None, progress_callback=None, conversation_id=None, db_name=None):
+def process_query(query, status_callback=None, progress_callback=None, conversation_id=None, db_name=None, embedding_model_name=None):
     """
     处理用户查询并返回结果
     
@@ -85,11 +85,11 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
 
     if(len(context) > 10005):
         context = context[-10000:]
+    
+    # logger.info(f"context: {context}")
     config = ConfigLoader()
     # 获取 LLM 模型名
     llm_model_name = config.get("llm.model")
-    # 获取 embedding 模型名
-    embedding_model_name = config.get("embedding.model")
     # 获取 API 基础 URL
     base_url = config.get("llm.base_url")
     # 获取 prompt 模板
@@ -107,7 +107,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
             "base_url": base_url,
             "prompt_template": prompt_template,
             "api_key": api_key,
-            "db_name": db_name
+            "db_name": db_name,
         }
     )
     # 嵌入节点
@@ -141,7 +141,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
             "base_url": base_url,
             "prompt_template": prompt_template,
             "api_key": api_key,
-            "db_name": db_name
+            "db_name": db_name,
         }
     )
     # 输出节点
@@ -153,9 +153,18 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
     input_data = {
         "context": context,
         "user_query": query,
+        "db_name": db_name
     }
 
     original_user_query = query
+    logger.info(f"原始用户查询: {original_user_query}")
+    logger.info(f"context: {context}")
+    logger.info(f"db_name: {db_name}")
+    logger.info(f"base_url: {base_url}")
+    logger.info(f"embedding_model_name: {embedding_model_name}")
+    logger.info(f"llm_model_name: {llm_model_name}")
+    logger.info(f"persist_dir: {persist_dir}")
+    
 
     # 按顺序执行
     if status_callback: status_callback("正在查询相关API...")
@@ -195,7 +204,7 @@ def process_query(query, status_callback=None, progress_callback=None, conversat
     
     if status_callback: status_callback("AI正在生成回答...")
     if progress_callback: progress_callback(80)
-    context += f"检索结果: {data_after_retriever['context']}\n"
+    context += f"api描述: {api_description}\n检索结果: {data_after_retriever['context']}\n"
     try:
         data_after_llm = llm_node.process({"context": context, "user_query": original_user_query, "db_name": db_name})
     except Exception as e:
@@ -260,7 +269,8 @@ if __name__ == "__main__":
         if conversation_id == "":
             conversation_id = conversations_manager.create_new_conversation()
         # 获取所有数据库名称
-        db_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "database")
+        config = ConfigLoader()
+        db_dir = os.path.join(config.project_root, "data", "database")
         db_names = []
         if os.path.exists(db_dir):
             db_names = [name for name in os.listdir(db_dir) if os.path.isdir(os.path.join(db_dir, name))]
@@ -277,6 +287,19 @@ if __name__ == "__main__":
         if db_name not in db_names:
             logger.error("数据库名称不存在")
             exit()
+        
+        embedding_model_dir = os.path.join(db_dir, db_name, "chroma_openai")
+        if os.path.exists(embedding_model_dir):
+            for i, name in enumerate(os.listdir(embedding_model_dir)):
+                logger.info(f"{i}: {name}")
+            embedding_model_name = str(input("请选择要使用的嵌入模型名称:"))
+            if embedding_model_name not in os.listdir(embedding_model_dir):
+                logger.error("嵌入模型名称不存在")
+                exit()
+        else:
+            logger.error("数据库名称不存在")
+            exit()
+        
         query = str(input("请输入你的问题："))
-        result = process_query(query, status_callback, progress_callback, conversation_id, db_name)
+        result = process_query(query=query, status_callback=status_callback, progress_callback=progress_callback, conversation_id=conversation_id, db_name=db_name, embedding_model_name=embedding_model_name)
         print(result)

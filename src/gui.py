@@ -44,11 +44,12 @@ class ProcessingThread(QThread):
     status_update = pyqtSignal(str)
     progress_update = pyqtSignal(int)
     
-    def __init__(self, query, conversation_id=None, db_name=None):
+    def __init__(self, query, conversation_id=None, db_name=None, embedding_model_name=None):
         super().__init__()
         self.query = query
         self.conversation_id = conversation_id
         self.db_name = db_name
+        self.embedding_model_name = embedding_model_name
         
     def run(self):
         try:
@@ -59,7 +60,8 @@ class ProcessingThread(QThread):
                 status_callback=self.status_update.emit,
                 progress_callback=self.progress_update.emit,
                 conversation_id=self.conversation_id,
-                db_name=self.db_name
+                db_name=self.db_name,
+                embedding_model_name=self.embedding_model_name
             )
             
             # 发送结果信号
@@ -334,6 +336,36 @@ class WebRagGUI(QMainWindow):
         """)
         content_layout.addWidget(self.db_selector)
         
+        # 创建数据库选择区域
+        embedding_model_label = QLabel('请选择嵌入模型:')
+        embedding_model_label.setFixedHeight(30)  # 设置固定高度为30像素
+        content_layout.addWidget(embedding_model_label)
+        # 添加嵌入模型选择下拉框
+        self.embedding_model_selector = QComboBox()
+        self.embedding_model_selector.setStyleSheet("""
+            QComboBox {
+                background-color: #ffecf1;
+                color: #5a5a5a;
+                border: 1px solid #ffcce0;
+                border-radius: 5px;
+                padding: 5px;
+                min-height: 30px;
+            }
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 20px;
+                border-left: 1px solid #ffcce0;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #fff5f8;
+                color: #5a5a5a;
+                selection-background-color: #ffd6e5;
+                selection-color: #5a5a5a;
+            }
+        """)
+        content_layout.addWidget(self.embedding_model_selector)
+        
         # 创建输入区域
         input_label = QLabel('请输入你的问题:')
         input_label.setFixedHeight(40)  # 设置固定高度为40像素
@@ -453,10 +485,16 @@ class WebRagGUI(QMainWindow):
         if not self.current_conversation_id:
             self.create_new_conversation()
         
-        # 获取选中的数据库名称
+        # 获取选中的数据库名称和嵌入模型名称
         db_name = self.db_selector.currentText()
+        embedding_model_name = self.embedding_model_selector.currentText()
+        
         if db_name == "未找到可用数据库":
             self.status_label.setText('请先构建数据库')
+            return
+            
+        if embedding_model_name == "未找到嵌入模型":
+            self.status_label.setText('请先构建嵌入模型')
             return
             
         # 更新状态
@@ -468,7 +506,7 @@ class WebRagGUI(QMainWindow):
         self.loading_animation.start()
         
         # 创建处理线程
-        self.processing_thread = ProcessingThread(query, self.current_conversation_id, db_name)
+        self.processing_thread = ProcessingThread(query, self.current_conversation_id, db_name, embedding_model_name)
         self.processing_thread.result_ready.connect(self.update_result)
         self.processing_thread.status_update.connect(self.update_status)
         self.processing_thread.progress_update.connect(self.update_progress)
@@ -915,6 +953,7 @@ class WebRagGUI(QMainWindow):
         """加载可用的数据库到下拉菜单"""
         # 清空下拉框
         self.db_selector.clear()
+        self.embedding_model_selector.clear()
         
         # 获取数据库目录
         import os
@@ -929,6 +968,7 @@ class WebRagGUI(QMainWindow):
         if not db_names:
             self.db_selector.addItem("未找到可用数据库")
             self.db_selector.setEnabled(False)
+            self.embedding_model_selector.setEnabled(False)
             self.submit_button.setEnabled(False)
             self.status_label.setText("未找到可用数据库，请先构建数据库")
             return
@@ -941,6 +981,37 @@ class WebRagGUI(QMainWindow):
         if self.db_selector.count() > 0:
             self.db_selector.setCurrentIndex(0)
             self.submit_button.setEnabled(True)
+            # 加载第一个数据库的嵌入模型
+            self.load_embedding_models(self.db_selector.currentText())
+        
+        # 连接数据库选择变化信号
+        self.db_selector.currentTextChanged.connect(self.load_embedding_models)
+
+    def load_embedding_models(self, db_name):
+        """加载指定数据库的嵌入模型"""
+        # 清空嵌入模型选择框
+        self.embedding_model_selector.clear()
+        
+        # 获取嵌入模型目录
+        import os
+        db_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "database")
+        embedding_model_dir = os.path.join(db_dir, db_name, "chroma_openai")
+        
+        # 如果目录存在，获取所有嵌入模型
+        if os.path.exists(embedding_model_dir):
+            embedding_models = [name for name in os.listdir(embedding_model_dir) if os.path.isdir(os.path.join(embedding_model_dir, name))]
+            
+            # 添加嵌入模型到下拉框
+            for model in embedding_models:
+                self.embedding_model_selector.addItem(model)
+            
+            # 默认选择第一个嵌入模型
+            if self.embedding_model_selector.count() > 0:
+                self.embedding_model_selector.setCurrentIndex(0)
+                self.embedding_model_selector.setEnabled(True)
+        else:
+            self.embedding_model_selector.addItem("未找到嵌入模型")
+            self.embedding_model_selector.setEnabled(False)
 
 def main():
     app = QApplication(sys.argv)

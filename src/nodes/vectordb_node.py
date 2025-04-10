@@ -3,6 +3,7 @@
 from .base_node import Node
 from langchain_chroma import Chroma
 import os
+from utils.logger import Logger
 # import你的Chroma类或其它向量数据库
 class VectorDBNode(Node):
     def __init__(self, node_id: str, config: dict = None):
@@ -10,12 +11,13 @@ class VectorDBNode(Node):
         用于连接向量数据库(如Chroma)的节点。
         """
         super().__init__(node_id, config)
+        self.logger = Logger.get_logger("flow")
         persist_directory = os.path.join(config.get("persist_directory"), "chroma_openai", config.get("model"))
 
         if not os.path.exists(persist_directory):
             raise ValueError(f"向量数据库不存在: {persist_directory}")
         else:
-            print(f"向量数据库存在: {persist_directory}")
+            self.logger.info(f"向量数据库存在: {persist_directory}")
         
         # 初始化你的向量数据库, 例如Chroma
         self.vectordb = Chroma(

@@ -1,6 +1,5 @@
 {
     "embedding": {
-        "model": "text-embedding-3-small",
         "base_url": "https://api.chatanywhere.tech/v1",
         "openai_api_key": "${OPENAI_API_KEY}"
     },
@@ -10,14 +9,12 @@
     },
     "llm": {
         "model": "gpt-4o",
-        "temperature": 0.7,
         "openai_api_key": "${OPENAI_API_KEY}",
         "base_url": "https://api.chatanywhere.tech/v1",
-        "prompt_template": "永远用中文回答，你的输出环境支持markdown和latex的渲染。请使用Markdown格式来组织你的回答，包括：\n1. 使用适当的标题层级(##, ###)\n2. 使用代码块(```)展示代码示例\n3. 使用列表和表格来组织信息\n4. 对重要概念使用粗体或斜体\n5. 使用适当的分隔符分隔不同部分\n\nlatex部分请用$或$$来包裹，请确保你的回答清晰、准确且容易理解。如果上下文中没有足够信息，请明确指出。\n世界上的API变化极快，不管你对你的答案有多自信，请根据查询到的上下文回答相关问题。同时尽可能给出一到两个代码案例，而不是简单的叙述文档：知识库：{db_name}\n上下文:\n{context}\n\n问题:\n{user_query}"
+        "prompt_template": "你的输出环境支持markdown和latex的渲染。请使用Markdown格式来组织你的回答，包括：\n1. 使用适当的标题层级(##, ###)\n2. 使用代码块(```)展示代码示例\n3. 使用列表和表格来组织信息\n4. 对重要概念使用粗体或斜体\n5. 使用适当的分隔符分隔不同部分\n\nlatex部分请用$或$$来包裹，请确保你的回答清晰、准确且容易理解。如果上下文中没有足够信息，请明确指出。\n世界上的API变化极快，不管你对你的答案有多自信，请根据查询到的上下文回答相关问题,如果你看到上下文中看到”api描述“，和“检索文档”存在区别，请诚实的指出来，并一切以“检索文档”为准。同时尽可能给出一到两个案例，而不是简单的叙述文档：知识库：{db_name}\n上下文:\n{context}\n\n问题:\n{user_query}"
     },
     "title_generator": {
         "model": "gpt-4o-mini",
-        "temperature": 0.7,
         "openai_api_key": "${OPENAI_API_KEY}",
         "base_url": "https://api.chatanywhere.tech/v1",
         "prompt_template": "请根据对话内容生成一个简洁的标题，只输出标题，不要有任何别的东西。\n对话内容:\n{context}"

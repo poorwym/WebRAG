@@ -4,6 +4,15 @@ import re
 from dotenv import load_dotenv
 from .logger import Logger
 
+def singleton(cls):
+    instances = {}
+    def get_instance(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+    return get_instance
+
+@singleton
 class ConfigLoader:
     def __init__(self, config_path=None):
         self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

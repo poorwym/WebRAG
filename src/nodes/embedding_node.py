@@ -3,6 +3,7 @@
 from .base_node import Node
 from langchain_openai import OpenAIEmbeddings
 from typing import Dict, Any
+from utils.logger import Logger
 # 这里的 embedding 相关引入，例如 from langchain_openai import OpenAIEmbeddings
 # 或者你自己封装的embedding类
 
@@ -19,6 +20,7 @@ class EmbeddingNode(Node):
             model=self.model,
             base_url=self.base_url
         )
+        self.logger = Logger.get_logger("flow")
         self.vectordb = None
 
     def process(self, data: dict) -> dict:
