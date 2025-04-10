@@ -39,7 +39,7 @@ class VectorDBNode(Node):
         # 在Chroma中检索k条最相似文档
         docs = []
         for embedding in embeddings:
-            docs.extend(self.vectordb.similarity_search_by_vector(embedding, k=10))
+            docs.extend(self.vectordb.similarity_search_by_vector(embedding, k=5))
         
         return {
             "retrieved_docs": docs,

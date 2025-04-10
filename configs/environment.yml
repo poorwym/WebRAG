@@ -36,5 +36,6 @@ dependencies:
   - requests
   - beautifulsoup4
   - html2text
+  - cohere
   - pip:
     - unstructured

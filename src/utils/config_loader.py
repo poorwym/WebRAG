@@ -22,7 +22,7 @@ class ConfigLoader:
         load_dotenv(env_path)
         try:
             self.logger.info(f"OPENAI_API_KEY: {os.getenv('OPENAI_API_KEY')}")
-            pass
+            self.logger.info(f"COHERE_API_KEY: {os.getenv('COHERE_API_KEY')}")
         except Exception as e:
             self.logger.error(f"加载 .env 文件失败: {e}")
 
